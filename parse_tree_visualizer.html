@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathScript Parse Tree Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .examples {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .examples h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-btn {
+            padding: 10px 15px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        #treeCanvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .info-section {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-box pre {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .legend {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .legend h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #c00;
+            display: none;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #060;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #060;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .info-section {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 MathScript Parse Tree Visualizer</h1>
+            <p>Part 2: Syntax Analysis & Parse Tree Generation</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <div class="examples">
+                    <h3>📚 Example Expressions (Click to Use)</h3>
+                    <div class="example-buttons">
+                        <button class="example-btn" onclick="setExample('x = 5')">x = 5</button>
+                        <button class="example-btn" onclick="setExample('result = 2 + 3 * 4')">2 + 3 * 4</button>
+                        <button class="example-btn" onclick="setExample('area = (5 + 3) * 2')">(5 + 3) * 2</button>
+                        <button class="example-btn" onclick="setExample('value = 10 - 2 * 3')">10 - 2 * 3</button>
+                        <button class="example-btn" onclick="setExample('result = ((10 - 2) * (3 + 1)) / 4')">Nested Parentheses</button>
+                        <button class="example-btn" onclick="setExample('pi = 3.14')">Float Assignment</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="expressionInput">Enter MathScript Expression:</label>
+                    <input type="text" id="expressionInput" placeholder="e.g., x = 5 + 3 * 2" value="x = 5 + 3 * 2">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="generateTree()">🎨 Generate Parse Tree</button>
+                    <button class="btn-secondary" onclick="clearCanvas()">🗑️ Clear</button>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+
+            <canvas id="treeCanvas"></canvas>
+
+            <div class="legend">
+                <h3>🎨 Node Color Legend</h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #667eea;"></div>
+                        <span>Statement/Assignment</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #764ba2;"></div>
+                        <span>Expression/Term</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #48bb78;"></div>
+                        <span>Number</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ed8936;"></div>
+                        <span>Identifier</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e53e3e;"></div>
+                        <span>Operator</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #38b2ac;"></div>
+                        <span>Factor/Parentheses</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-box">
+                    <h3>📊 Token Stream</h3>
+                    <pre id="tokenOutput">Tokens will appear here...</pre>
+                </div>
+                <div class="info-box">
+                    <h3>💻 Three-Address Code</h3>
+                    <pre id="codeOutput">Intermediate code will appear here...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple tokenizer for MathScript
+        function tokenize(input) {
+            const tokens = [];
+            const tokenSpec = [
+                ['NUMBER', /\d+\.?\d*/],
+                ['IDENTIFIER', /[A-Za-z][A-Za-z0-9]*/],
+                ['ASSIGN', /=/],
+                ['PLUS', /\+/],
+                ['MINUS', /-/],
+                ['TIMES', /\*/],
+                ['DIVIDE', /\//],
+                ['LPAREN', /\(/],
+                ['RPAREN', /\)/],
+                ['SKIP', /\s+/]
+            ];
+
+            let pos = 0;
+            while (pos < input.length) {
+                let matched = false;
+                for (const [type, regex] of tokenSpec) {
+                    const match = input.slice(pos).match(new RegExp('^' + regex.source));
+                    if (match) {
+                        if (type !== 'SKIP') {
+                            tokens.push([type, match[0]]);
+                        }
+                        pos += match[0].length;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched) {
+                    throw new Error(`Unexpected character: ${input[pos]}`);
+                }
+            }
+            return tokens;
+        }
+
+        // Simple parser
+        class SimpleParser {
+            constructor(tokens) {
+                this.tokens = tokens;
+                this.pos = 0;
+                this.tempCount = 0;
+                this.code = [];
+            }
+
+            current() {
+                return this.pos < this.tokens.length ? this.tokens[this.pos] : null;
+            }
+
+            consume() {
+                this.pos++;
+            }
+
+            peek(offset) {
+                return this.pos + offset < this.tokens.length ? this.tokens[this.pos + offset][0] : null;
+            }
+
+            newTemp() {
+                return `t${++this.tempCount}`;
+            }
+
+            parse() {
+                return this.statement();
+            }
+
+            statement() {
+                const node = { type: 'STATEMENT', children: [] };
+                const token = this.current();
+                
+                if (token && token[0] === 'IDENTIFIER' && this.peek(1) === 'ASSIGN') {
+                    node.children.push(this.assignment());
+                } else {
+                    const [exprNode, value] = this.expression();
+                    node.children.push(exprNode);
+                }
+                
+                return node;
+            }
+
+            assignment() {
+                const node = { type: 'ASSIGNMENT', children: [] };
+                const varName = this.current()[1];
+                
+                node.children.push({ type: 'IDENTIFIER', value: varName });
+                this.consume();
+                
+                node.children.push({ type: 'OPERATOR', value: '=' });
+                this.consume();
+                
+                const [exprNode, value] = this.expression();
+                node.children.push(exprNode);
+                
+                this.code.push(`${varName} = ${value}`);
+                
+                return node;
+            }
+
+            expression() {
+                const node = { type: 'EXPRESSION', children: [] };
+                let [termNode, termValue] = this.term();
+                node.children.push(termNode);
+                
+                while (this.current() && ['PLUS', 'MINUS'].includes(this.current()[0])) {
+                    const op = this.current()[0];
+                    const opSymbol = op === 'PLUS' ? '+' : '-';
+                    node.children.push({ type: 'OPERATOR', value: opSymbol });
+                    this.consume();
+                    
+                    const [rightNode, rightValue] = this.term();
+                    node.children.push(rightNode);
+                    
+                    const temp = this.newTemp();
+                    this.code.push(`${temp} = ${termValue} ${opSymbol} ${rightValue}`);
+                    termValue = temp;
+                }
+                
+                return [node, termValue];
+            }
+
+            term() {
+                const node = { type: 'TERM', children: [] };
+                let [factorNode, factorValue] = this.factor();
+                node.children.push(factorNode);
+                
+                while (this.current() && ['TIMES', 'DIVIDE'].includes(this.current()[0])) {
+                    const op = this.current()[0];
+                    const opSymbol = op === 'TIMES' ? '*' : '/';
+                    node.children.push({ type: 'OPERATOR', value: opSymbol });
+                    this.consume();
+                    
+                    const [rightNode, rightValue] = this.factor();
+                    node.children.push(rightNode);
+                    
+                    const temp = this.newTemp();
+                    this.code.push(`${temp} = ${factorValue} ${opSymbol} ${rightValue}`);
+                    factorValue = temp;
+                }
+                
+                return [node, factorValue];
+            }
+
+            factor() {
+                const token = this.current();
+                
+                if (token[0] === 'NUMBER') {
+                    this.consume();
+                    return [{ type: 'NUMBER', value: token[1] }, token[1]];
+                } else if (token[0] === 'IDENTIFIER') {
+                    this.consume();
+                    return [{ type: 'IDENTIFIER', value: token[1] }, token[1]];
+                } else if (token[0] === 'LPAREN') {
+                    const node = { type: 'FACTOR', children: [] };
+                    node.children.push({ type: 'LPAREN', value: '(' });
+                    this.consume();
+                    
+                    const [exprNode, value] = this.expression();
+                    node.children.push(exprNode);
+                    
+                    if (this.current() && this.current()[0] === 'RPAREN') {
+                        node.children.push({ type: 'RPAREN', value: ')' });
+                        this.consume();
+                    }
+                    
+                    return [node, value];
+                }
+                
+                throw new Error('Unexpected token');
+            }
+        }
+
+        // Tree drawing functions
+        function getNodeColor(type) {
+            const colors = {
+                'STATEMENT': '#667eea',
+                'ASSIGNMENT': '#667eea',
+                'EXPRESSION': '#764ba2',
+                'TERM': '#764ba2',
+                'FACTOR': '#38b2ac',
+                'NUMBER': '#48bb78',
+                'IDENTIFIER': '#ed8936',
+                'OPERATOR': '#e53e3e',
+                'LPAREN': '#38b2ac',
+                'RPAREN': '#38b2ac'
+            };
+            return colors[type] || '#666';
+        }
+
+        function calculateTreeDimensions(node) {
+            if (!node.children || node.children.length === 0) {
+                return { width: 1, height: 1 };
+            }
+            
+            let totalWidth = 0;
+            let maxHeight = 0;
+            
+            for (const child of node.children) {
+                const dims = calculateTreeDimensions(child);
+                totalWidth += dims.width;
+                maxHeight = Math.max(maxHeight, dims.height);
+            }
+            
+            return { width: Math.max(1, totalWidth), height: maxHeight + 1 };
+        }
+
+        function drawTree(ctx, node, x, y, width, height) {
+            const nodeRadius = 30;
+            const verticalSpacing = 100;
+            
+            // Draw current node
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = getNodeColor(node.type);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw node label
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            const label = node.value || node.type;
+            const lines = label.length > 10 ? [label.slice(0, 10), label.slice(10)] : [label];
+            
+            lines.forEach((line, i) => {
+                ctx.fillText(line, x, y + (i - (lines.length - 1) / 2) * 10);
+            });
+            
+            // Draw children
+            if (node.children && node.children.length > 0) {
+                const childWidth = width / node.children.length;
+                let childX = x - width / 2 + childWidth / 2;
+                
+                for (const child of node.children) {
+                    const childY = y + verticalSpacing;
+                    
+                    // Draw line to child
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + nodeRadius);
+                    ctx.lineTo(childX, childY - nodeRadius);
+                    ctx.strokeStyle = '#999';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Draw child
+                    drawTree(ctx, child, childX, childY, childWidth * 0.9, height);
+                    
+                    childX += childWidth;
+                }
+            }
+        }
+
+        function setExample(expr) {
+            document.getElementById('expressionInput').value = expr;
+        }
+
+        function generateTree() {
+            const input = document.getElementById('expressionInput').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            const successDiv = document.getElementById('successMessage');
+            const canvas = document.getElementById('treeCanvas');
+            const tokenOutput = document.getElementById('tokenOutput');
+            const codeOutput = document.getElementById('codeOutput');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!input) {
+                errorDiv.textContent = 'Please enter an expression!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                // Tokenize
+                const tokens = tokenize(input);
+                tokenOutput.textContent = tokens.map(t => `(${t[0]}, '${t[1]}')`).join('\n');
+                
+                // Parse
+                const parser = new SimpleParser(tokens);
+                const tree = parser.parse();
+                
+                // Display intermediate code
+                codeOutput.textContent = parser.code.length > 0 
+                    ? parser.code.map((line, i) => `${i + 1}: ${line}`).join('\n')
+                    : 'No intermediate code generated';
+                
+                // Calculate dimensions
+                const dims = calculateTreeDimensions(tree);
+                const canvasWidth = Math.max(800, dims.width * 150);
+                const canvasHeight = dims.height * 120 + 100;
+                
+                // Setup canvas
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+                canvas.style.display = 'block';
+                
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw tree
+                drawTree(ctx, tree, canvasWidth / 2, 50, canvasWidth * 0.8, canvasHeight);
+                
+                successDiv.textContent = '✓ Parse tree generated successfully!';
+                successDiv.style.display = 'block';
+                
+            } catch (error) {
+                errorDiv.textContent = `Error: ${error.message}`;
+                errorDiv.style.display = 'block';
+                canvas.style.display = 'none';
+            }
+        }
+
+        function clearCanvas() {
+            const canvas = document.getElementById('treeCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.style.display = 'none';
+            
+            document.getElementById('expressionInput').value = '';
+            document.getElementById('tokenOutput').textContent = 'Tokens will appear here...';
+            document.getElementById('codeOutput').textContent = 'Intermediate code will appear here...';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Allow Enter key to generate tree
+        document.getElementById('expressionInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateTree();
+            }
+        });
+    </script>
+</body>
+</html>
